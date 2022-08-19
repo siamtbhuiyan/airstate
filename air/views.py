@@ -3,7 +3,7 @@ from django.db import connection
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
-from air.functions import login_required
+from air.functions import get_aqi, login_required
 
 @login_required
 def index(request):
@@ -11,11 +11,30 @@ def index(request):
     if request.session.has_key('username'):
         username = request.session['username']
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM tblAirQuality")
-        data = cursor.fetchall()
+        cursor.execute("SELECT date(time), pm25 FROM tblAirQuality WHERE division='Dhaka' ORDER BY time DESC")
+        current = cursor.fetchone()
+        cursor.execute("SELECT DISTINCT division FROM tblAirQuality")
+        divisionData = cursor.fetchall()
+    currentDivision = "Dhaka"
+    aqi = get_aqi(current[1])
+    divisions = []
+    for d in divisionData:
+        divisions.append(d[0])
+    print(get_aqi(220.1))
+    if request.method == "POST":
+        currentDivision = request.POST["division"]
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT date(time), pm25 FROM tblAirQuality WHERE division=%s ORDER BY time DESC", [currentDivision])
+            current = cursor.fetchone()
+        aqi = get_aqi(current[1])
     return render(request, "air/index.html", {
         "username": username,
-        "data": data
+        "currentDate": current[0],
+        "divisions": divisions,
+        "currentDivision": currentDivision,
+        "aqi_value": aqi[0],
+        "aqi_status": aqi[1],
+        "aqi_color": aqi[2]
     })
 
 def register(request):

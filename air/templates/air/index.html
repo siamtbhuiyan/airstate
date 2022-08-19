@@ -1,8 +1,49 @@
 {% extends "air/layout.html" %} 
 
 {% block body %}
-<h1>{{ username }}</h1>
-{% for d in data %}
-<p>{{ d }}</p>
-{% endfor %}
+<div class="py-4">
+  <div class="p-4 {{ aqi_color }}">
+    <div class="py-2">
+      US AQI {{ aqi_value }}
+    </div>
+    <div class="py-2">
+      <h3>{{ aqi_status }}</h3>
+    </div>
+  </div>
+  <div class="py-4">
+    <p>What is the current Air Quality in {{ currentDivision }}</p>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Air Pollution Level</th>
+          <th>Air Quality Index</th>
+          <th>Main Pollutant</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ aqi_status }}</td>
+          <td>{{ aqi_value }} <span class="text-secondary">US AQI</span></td>
+          <td>PM2.5</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <form action="{% url 'index' %}" method="post">
+    {% csrf_token %}
+    <div class="form-group py-2">
+      <label for="division">Change Division</label>
+      <select class="form-select" aria-label="Select Division" name="division" id="division">
+        {% for division in divisions %}
+        {% if division == currentDivision %}
+        <option selected>{{ division }}</option>
+        {% else %}
+        <option>{{ division }}</option>
+        {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Change</button>
+</form>
+</div>
 {% endblock %}

@@ -55,7 +55,7 @@
         <div class="form-group pb-2">
           <label for="season">Select Season</label>
           <select class="form-select" aria-label="Select Season" name="season" id="season">
-            <option selected>Select Season</option>
+            <option selected disabled>Select Season</option>
             {% for season in seasons %}
             <option>{{ season }}</option>
             {% endfor %}
@@ -64,9 +64,24 @@
         <div class="form-group pb-2">
           <label for="year">Select Year</label>
           <select class="form-select" aria-label="Select Year" name="year" id="year">
-            <option selected>Select Year</option>
+            <option selected disabled>Select Year</option>
             {% for year in years %}
             <option>{{ year }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Generate</button>
+      </form>
+    </div>
+    <div class="py-4">
+      <p>Division-Wise Time-based AQI</p>
+      <form action="{% url 'time_based' %}" method="post">
+        {% csrf_token %}
+        <div class="form-group pb-2">
+          <select class="form-select" aria-label="Select Time" name="time" id="time">
+            <option selected disabled>Select Time</option>
+            {% for time in times %}
+            <option>{{ time }}</option>
             {% endfor %}
           </select>
         </div>

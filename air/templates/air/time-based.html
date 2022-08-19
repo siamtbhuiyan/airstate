@@ -1,0 +1,9 @@
+{% extends "air/layout.html" %}
+
+{% block body %}
+
+<h3>Division-Wise Time-based Air Quality Index (AQI)</h3>
+{% autoescape off %}
+{{ line_chart }}
+{% endautoescape %}
+{% endblock %}

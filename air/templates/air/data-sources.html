@@ -1,0 +1,9 @@
+{% extends "air/layout.html" %}
+
+{% block body %}
+
+<h3>Comparing Multiple Data Sources</h3>
+{% autoescape off %}
+{{ line_chart }}
+{% endautoescape %}
+{% endblock %}

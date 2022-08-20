@@ -9,6 +9,9 @@ import pandas as pd
 from plotly.offline import plot
 import plotly.express as px
 
+from urllib.request import urlopen
+import json
+
 @login_required
 def index(request):
     username = ""
@@ -609,3 +612,19 @@ def daily_based(request):
             "username": username,
             "line_chart": line_chart
         })
+
+def bd_map(request):
+    username = ""
+    if request.session.has_key('username'):
+        username = request.session['username']
+    with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
+        counties = json.load(response)
+
+# Barisal	BG85	
+# Chittagong	BG84
+# Dhaka	BG81	
+# Khulna	BG82	
+# Mymensingh	BG81	
+# Rajshahi	BG83	
+# Rangpur	BG87	
+# Sylhet	BG86	

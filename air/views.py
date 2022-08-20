@@ -28,7 +28,7 @@ def index(request):
     divisions = []
     years = []
     seasons = []
-    times = ["Yearly", "Seasonal"]
+    times = ["Yearly", "Monthly", "Seasonal"]
     for d in divisionData:
         divisions.append(d[0])
     for s in seasonData:
@@ -49,7 +49,8 @@ def index(request):
         "years": years,
         "currentDivision": currentDivision,
         "times": times,
-        "box_basis": ["By Station", "Monthly"],
+        "box_basis": ["By Station", "Monthly", "Yearly"],
+        "season_basis": ["Monthly", "Yearly"],
         "aqi_value": aqi[0],
         "aqi_status": aqi[1],
         "aqi_color": aqi[2]
@@ -127,7 +128,7 @@ def data_sources(request):
             } for d in data
         ]
 
-        figure = px.line(cleaned_data, x="Daily", y="Daily Avg PM2.5", title=f"{request.POST['season']} {request.POST['year']}", color="Organization")
+        figure = px.line(cleaned_data, x="Daily", y="Daily Avg PM2.5", title=f"Compare Multiple Data Sources from {request.POST['season']} {request.POST['year']}", color="Organization")
         line_chart = plot(figure, output_type="div")
 
         return render(request, "air/data-sources.html", {
@@ -217,7 +218,84 @@ def time_based(request):
                 } for d in khulna
             ]
             data = cleaned_dhaka + cleaned_rangpur + cleaned_sylhet + cleaned_barishal + cleaned_mymensingh + cleaned_chittagong + cleaned_khulna + cleaned_rajshahi
-            figure = px.line(data, x="year", y="pm2.5", color="division")
+            figure = px.line(data, x="year", y="pm2.5", color="division", title="Division-Wise Yearly AQI")
+            line_chart = plot(figure, output_type="div")
+        elif request.POST["time"] == "Monthly":
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT avg(pm25), strftime('%m', time) FROM tblAirQuality WHERE division = 'Dhaka' GROUP BY strftime('%m', time)")
+                dhaka = cursor.fetchall()
+                cursor.execute("SELECT avg(pm25), strftime('%m', time) FROM tblAirQuality WHERE division = 'Rangpur' GROUP BY strftime('%m', time)")
+                rangpur = cursor.fetchall()
+                cursor.execute("SELECT avg(pm25), strftime('%m', time) FROM tblAirQuality WHERE division = 'Barishal' GROUP BY strftime('%m', time)")
+                barishal = cursor.fetchall()
+                cursor.execute("SELECT avg(pm25), strftime('%m', time) FROM tblAirQuality WHERE division = 'Sylhet' GROUP BY strftime('%m', time)")
+                sylhet = cursor.fetchall()
+                cursor.execute("SELECT avg(pm25), strftime('%m', time) FROM tblAirQuality WHERE division = 'Khulna' GROUP BY strftime('%m', time)")
+                khulna = cursor.fetchall()
+                cursor.execute("SELECT avg(pm25), strftime('%m', time) FROM tblAirQuality WHERE division = 'Rajshahi' GROUP BY strftime('%m', time)")
+                rajshahi = cursor.fetchall()
+                cursor.execute("SELECT avg(pm25), strftime('%m', time) FROM tblAirQuality WHERE division = 'Chittagong' GROUP BY strftime('%m', time)")
+                chittagong = cursor.fetchall()
+                cursor.execute("SELECT avg(pm25), strftime('%m', time) FROM tblAirQuality WHERE division = 'Mymensingh' GROUP BY strftime('%m', time)")
+                mymensingh = cursor.fetchall()
+            cleaned_dhaka = [
+                {
+                    "pm2.5": d[0],
+                    "Month": d[1], 
+                    "division": "Dhaka"
+                } for d in dhaka
+            ]
+            cleaned_rangpur = [
+                {
+                    "pm2.5": d[0],
+                    "Month": d[1], 
+                    "division": "Rangpur"
+                } for d in rangpur
+            ]
+            cleaned_sylhet = [
+                {
+                    "pm2.5": d[0],
+                    "Month": d[1], 
+                    "division": "Sylhet"
+                } for d in sylhet
+            ]
+            cleaned_rajshahi = [
+                {
+                    "pm2.5": d[0],
+                    "Month": d[1], 
+                    "division": "Rajshahi"
+                } for d in rajshahi
+            ]
+            cleaned_barishal = [
+                {
+                    "pm2.5": d[0],
+                    "Month": d[1], 
+                    "division": "Barishal"
+                } for d in barishal
+            ]
+            cleaned_chittagong = [
+                {
+                    "pm2.5": d[0],
+                    "Month": d[1], 
+                    "division": "Chittagong"
+                } for d in chittagong
+            ]
+            cleaned_mymensingh = [
+                {
+                    "pm2.5": d[0],
+                    "Month": d[1], 
+                    "division": "Mymensingh"
+                } for d in mymensingh
+            ]
+            cleaned_khulna = [
+                {
+                    "pm2.5": d[0],
+                    "Month": d[1], 
+                    "division": "Khulna"
+                } for d in khulna
+            ]
+            data = cleaned_dhaka + cleaned_rangpur + cleaned_sylhet + cleaned_barishal + cleaned_mymensingh + cleaned_chittagong + cleaned_khulna + cleaned_rajshahi
+            figure = px.line(data, x="Month", y="pm2.5", color="division", title="Division-Wise Monthly AQI")
             line_chart = plot(figure, output_type="div")
         elif request.POST["time"] == "Seasonal":
             with connection.cursor() as cursor:
@@ -244,7 +322,6 @@ def time_based(request):
                     "division": "Dhaka"
                 } for d in dhaka
             ]
-            print(cleaned_dhaka)
             cleaned_rangpur = [
                 {
                     "pm2.5": d[0],
@@ -295,7 +372,7 @@ def time_based(request):
                 } for d in khulna
             ]
             data = cleaned_dhaka + cleaned_rangpur + cleaned_sylhet + cleaned_barishal + cleaned_mymensingh + cleaned_chittagong + cleaned_khulna + cleaned_rajshahi
-            figure = px.line(data, x="season", y="pm2.5", color="division")
+            figure = px.line(data, x="season", y="pm2.5", color="division", title="Division-Wise Seasonal AQI")
             line_chart = plot(figure, output_type="div")
         return render(request, "air/time-based.html", {
             "username": username,
@@ -318,7 +395,7 @@ def box_plot(request):
                     "Station": d[1], 
                 } for d in data
             ]
-            figure = px.box(cleaned_data, x="Station", y="PM2.5")
+            figure = px.box(cleaned_data, x="Station", y="PM2.5", title="Box plot AQI Data Visualization By Station")
             box = plot(figure, output_type="div")
         elif request.POST["time"] == "Monthly":
             with connection.cursor() as cursor:
@@ -330,9 +407,126 @@ def box_plot(request):
                     "Month": d[1], 
                 } for d in data
             ]
-            figure = px.box(cleaned_data, x="Month", y="PM2.5")
+            figure = px.box(cleaned_data, x="Month", y="PM2.5", title="Box plot Monthly AQI Data Visualization")
             box = plot(figure, output_type="div")
-    return render(request, "air/box-plot.html", {
-            "username": username,
-            "box": box
-        })
+        elif request.POST["time"] == "Yearly":
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT pm25, strftime('%Y', time) FROM tblAirQuality")
+                data = cursor.fetchall()
+            cleaned_data = [
+                {
+                    "PM2.5": d[0],
+                    "Year": d[1], 
+                } for d in data
+            ]
+            figure = px.box(cleaned_data, x="Year", y="PM2.5", title="Box plot Yearly AQI Data Visualization")
+            box = plot(figure, output_type="div")    
+        return render(request, "air/box-plot.html", {
+                "username": username,
+                "box": box
+            })
+
+@login_required
+def season_wise(request):
+    username = ""
+    if request.session.has_key('username'):
+        username = request.session['username']
+    if request.method == "POST":
+        if request.POST["time"] == "Monthly":
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT AVG(pm25), season FROM tblAirQuality WHERE season='Summer' GROUP BY strftime('%m', time)")
+                summer_data = cursor.fetchall()
+                cursor.execute("SELECT AVG(pm25), season FROM tblAirQuality WHERE season='Winter' GROUP BY strftime('%m', time)")
+                winter_data = cursor.fetchall()
+                cursor.execute("SELECT AVG(pm25), season FROM tblAirQuality WHERE season='Spring' GROUP BY strftime('%m', time)")
+                spring_data = cursor.fetchall()
+                cursor.execute("SELECT AVG(pm25), season FROM tblAirQuality WHERE season='Autumn' GROUP BY strftime('%m', time)")
+                autumn_data = cursor.fetchall()
+            cleaned_summer_data = [
+                {
+                    "PM2.5": d[0],
+                    "Season": d[1], 
+                } for d in summer_data
+            ]
+            cleaned_winter_data = [
+                {
+                    "PM2.5": d[0],
+                    "Season": d[1], 
+                } for d in winter_data
+            ]
+            cleaned_spring_data = [
+                {
+                    "PM2.5": d[0],
+                    "Season": d[1], 
+                } for d in spring_data
+            ]
+            cleaned_autumn_data = [
+                {
+                    "PM2.5": d[0],
+                    "Season": d[1], 
+                } for d in autumn_data
+            ]
+            cleaned_data = cleaned_autumn_data + cleaned_spring_data + cleaned_winter_data + cleaned_summer_data
+            figure = px.box(cleaned_data, x="Season", y="PM2.5", color="Season", title="Season-Wise Monthly AQI")
+            box = plot(figure, output_type="div")    
+        elif request.POST["time"] == "Yearly":
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT AVG(pm25), season FROM tblAirQuality WHERE season='Summer' GROUP BY strftime('%Y', time)")
+                summer_data = cursor.fetchall()
+                cursor.execute("SELECT AVG(pm25), season FROM tblAirQuality WHERE season='Winter' GROUP BY strftime('%Y', time)")
+                winter_data = cursor.fetchall()
+                cursor.execute("SELECT AVG(pm25), season FROM tblAirQuality WHERE season='Spring' GROUP BY strftime('%Y', time)")
+                spring_data = cursor.fetchall()
+                cursor.execute("SELECT AVG(pm25), season FROM tblAirQuality WHERE season='Autumn' GROUP BY strftime('%Y', time)")
+                autumn_data = cursor.fetchall()
+            cleaned_summer_data = [
+                {
+                    "PM2.5": d[0],
+                    "Season": d[1], 
+                } for d in summer_data
+            ]
+            cleaned_winter_data = [
+                {
+                    "PM2.5": d[0],
+                    "Season": d[1], 
+                } for d in winter_data
+            ]
+            cleaned_spring_data = [
+                {
+                    "PM2.5": d[0],
+                    "Season": d[1], 
+                } for d in spring_data
+            ]
+            cleaned_autumn_data = [
+                {
+                    "PM2.5": d[0],
+                    "Season": d[1], 
+                } for d in autumn_data
+            ]
+            cleaned_data = cleaned_autumn_data + cleaned_spring_data + cleaned_winter_data + cleaned_summer_data
+            figure = px.box(cleaned_data, x="Season", y="PM2.5", color="Season", title="Season-Wise Yearly AQI")
+            box = plot(figure, output_type="div")  
+        return render(request, "air/season-wise.html", {
+                    "username": username,
+                    "box": box
+                })
+
+def yearly_average(request):
+    if request.session.has_key('username'):
+        username = request.session['username']
+    if request.method == "POST":
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT AVG(pm25), strftime('%Y', time) season FROM tblAirQuality GROUP BY strftime('%Y', time)")
+            data = cursor.fetchall()
+        cleaned_data = [
+                {
+                    "PM2.5": d[0],
+                    "Year": d[1], 
+                } for d in data
+            ]
+        figure = px.bar(cleaned_data, x="Year", y="PM2.5", title="Yearly Average AQI")
+        bar = plot(figure, output_type="div")  
+        return render(request, "air/yearly.html", {
+                "username": username,
+                "bar": bar
+            })

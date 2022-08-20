@@ -1,0 +1,50 @@
+{% extends "air/layout.html" %}
+
+{% block body %}
+<div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Value</th>
+                <th>Name</th>
+                <th>Color</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>0 to 50</td>
+                <td>Good</td>
+                <td>Green</td>
+            </tr>
+            <tr>
+                <td>51 to 100</td>
+                <td>Monderate</td>
+                <td>Yellow</td>
+            </tr>
+            <tr>
+                <td>101 to 150</td>
+                <td>Unhealthy for Sensitive Groups</td>
+                <td>Orange</td>
+            </tr>
+            <tr>
+                <td>151 to 200</td>
+                <td>Unhealthy</td>
+                <td>Red</td>
+            </tr>
+            <tr>
+                <td>201 to 300</td>
+                <td>Very Unhealthy</td>
+                <td>Purple</td>
+            </tr>
+            <tr>
+                <td>301 to 500</td>
+                <td>Hazardous</td>
+                <td>Maroon</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% autoescape off %}
+{{ division_map }}
+{% endautoescape %}
+{% endblock %}

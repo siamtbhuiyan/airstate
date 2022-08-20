@@ -1,6 +1,8 @@
+from ctypes.wintypes import PPOINT
+from webbrowser import get
 from django.shortcuts import render
 from django.db import connection
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 
 from air.functions import get_aqi, login_required
@@ -9,8 +11,7 @@ import pandas as pd
 from plotly.offline import plot
 import plotly.express as px
 
-from urllib.request import urlopen
-import json
+from json import load
 
 @login_required
 def index(request):
@@ -617,14 +618,107 @@ def bd_map(request):
     username = ""
     if request.session.has_key('username'):
         username = request.session['username']
-    with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
-        counties = json.load(response)
+    divisions = load(open('bangladesh_geojson_8_divisions.json','r'))	
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT pm25, DATE(time) FROM tblAirQuality WHERE division='Dhaka' ORDER BY time DESC")
+        dhaka = cursor.fetchone()
+        cursor.execute("SELECT pm25, DATE(time) FROM tblAirQuality WHERE division='Rangpur' ORDER BY time DESC")
+        rangpur = cursor.fetchone()
+        cursor.execute("SELECT pm25, DATE(time) FROM tblAirQuality WHERE division='Barishal' ORDER BY time DESC")
+        barishal = cursor.fetchone()
+        cursor.execute("SELECT pm25, DATE(time) FROM tblAirQuality WHERE division='Sylhet' ORDER BY time DESC")
+        sylhet = cursor.fetchone()
+        cursor.execute("SELECT pm25, DATE(time) FROM tblAirQuality WHERE division='Khulna' ORDER BY time DESC")
+        khulna = cursor.fetchone()
+        cursor.execute("SELECT pm25, DATE(time) FROM tblAirQuality WHERE division='Rajshahi' ORDER BY time DESC")
+        rajshahi = cursor.fetchone()
+        cursor.execute("SELECT pm25, DATE(time) FROM tblAirQuality WHERE division='Chittagong' ORDER BY time DESC")
+        chittagong = cursor.fetchone()
+        cursor.execute("SELECT pm25, DATE(time) FROM tblAirQuality WHERE division='Mymensingh' ORDER BY time DESC")
+        mymensingh = cursor.fetchone()
 
-# Barisal	BG85	
-# Chittagong	BG84
-# Dhaka	BG81	
-# Khulna	BG82	
-# Mymensingh	BG81	
-# Rajshahi	BG83	
-# Rangpur	BG87	
-# Sylhet	BG86	
+        data = [
+            {
+                "id": 0,
+                "name": "Barishal",
+                "AQI": get_aqi(barishal[0])[0],
+                "aqi_status": get_aqi(barishal[0])[1],
+                "aqi_color": get_aqi(barishal[0])[2]
+            },
+            {
+
+                "id": 1,
+                "name": "Chittagong",
+                "AQI": get_aqi(chittagong[0])[0],
+                "aqi_status": get_aqi(chittagong[0])[1],
+                "aqi_color": get_aqi(chittagong[0])[2]
+            },
+            {
+
+                "id": 2,
+                "name": "Dhaka",
+                "AQI": get_aqi(dhaka[0])[0],
+                "aqi_status": get_aqi(dhaka[0])[1],
+                "aqi_color": get_aqi(dhaka[0])[2]
+            },
+            {
+
+                "id": 3,
+                "name": "Khulna",
+                "AQI": get_aqi(khulna[0])[0],
+                "aqi_status": get_aqi(khulna[0])[1],
+                "aqi_color": get_aqi(khulna[0])[2]
+            },
+            {
+
+                "id": 4,
+                "name": "Mymensingh",
+                "AQI": get_aqi(mymensingh[0])[0],
+                "aqi_status": get_aqi(mymensingh[0])[1],
+                "aqi_color": get_aqi(mymensingh[0])[2]
+            },
+            {
+
+                "id": 5,
+                "name": "Rajshahi",
+                "AQI": get_aqi(rajshahi[0])[0],
+                "aqi_status": get_aqi(rajshahi[0])[1],
+                "aqi_color": get_aqi(rajshahi[0])[2]
+            },
+            {
+
+                "id": 6,
+                "name": "Rangpur",
+                "AQI": get_aqi(rangpur[0])[0],
+                "aqi_status": get_aqi(rangpur[0])[1],
+                "aqi_color": get_aqi(rangpur[0])[2]
+            },
+            {
+
+                "id": 7,
+                "name": "Sylhet",
+                "AQI": get_aqi(sylhet[0])[0],
+                "aqi_status": get_aqi(sylhet[0])[1],
+                "aqi_color": get_aqi(sylhet[0])[2]
+            }
+        ]
+        clrs = []
+        for i in range(len(data)):
+            if data[i]["AQI"] <= 50:
+                clrs.append('rgb(0, 255, 0)')
+            elif 51 < data[i]["AQI"] <= 100:
+                clrs.append('rgb(255, 255, 0)')
+            elif 101 < data[i]["AQI"] <= 150:
+                clrs.append('rgb(255, 165, 0)')
+            elif 151 < data[i]["AQI"] <= 200:
+                clrs.append('rgb(255, 0, 0)')
+            elif 201 < data[i]["AQI"] <= 300:
+                clrs.append('rgb(128, 0, 128)')
+            elif 301 < data[i]["AQI"] <= 500:
+                clrs.append('rgb(128, 0, 0)')
+        figure = px.choropleth_mapbox(data, geojson=divisions, locations='id', color='name', mapbox_style="carto-positron", center= { 'lat' : 23.6850, 'lon' : 90.3563}, zoom=5, opacity=0.6, title='Division Wise AQI Visualization with Colorcoding', hover_name='name', hover_data=['AQI'], color_discrete_sequence=clrs)
+        division_map = plot(figure, output_type="div")
+    return render(request, "air/bd-map.html", {
+            "username": username,
+            "division_map": division_map
+        })

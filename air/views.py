@@ -53,7 +53,8 @@ def index(request):
         "season_basis": ["Monthly", "Yearly"],
         "aqi_value": aqi[0],
         "aqi_status": aqi[1],
-        "aqi_color": aqi[2]
+        "aqi_color": aqi[2],
+        "pm25": current[1]
     })
 
 def register(request):
@@ -514,19 +515,97 @@ def season_wise(request):
 def yearly_average(request):
     if request.session.has_key('username'):
         username = request.session['username']
-    if request.method == "POST":
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT AVG(pm25), strftime('%Y', time) season FROM tblAirQuality GROUP BY strftime('%Y', time)")
-            data = cursor.fetchall()
-        cleaned_data = [
-                {
-                    "PM2.5": d[0],
-                    "Year": d[1], 
-                } for d in data
-            ]
-        figure = px.bar(cleaned_data, x="Year", y="PM2.5", title="Yearly Average AQI")
-        bar = plot(figure, output_type="div")  
-        return render(request, "air/yearly.html", {
-                "username": username,
-                "bar": bar
-            })
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT AVG(pm25), strftime('%Y', time) season FROM tblAirQuality GROUP BY strftime('%Y', time)")
+        data = cursor.fetchall()
+    cleaned_data = [
+            {
+                "PM2.5": d[0],
+                "Year": d[1], 
+            } for d in data
+        ]
+    figure = px.bar(cleaned_data, x="Year", y="PM2.5", title="Yearly Average AQI")
+    bar = plot(figure, output_type="div")  
+    return render(request, "air/yearly.html", {
+            "username": username,
+            "bar": bar
+        })
+        
+
+@login_required
+def daily_based(request):
+    username = ""
+    if request.session.has_key('username'):
+        username = request.session['username']
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT pm25, DATE(time) FROM tblAirQuality WHERE division='Dhaka' ORDER BY time DESC")
+        dhaka = cursor.fetchone()
+        cursor.execute("SELECT pm25, DATE(time) FROM tblAirQuality WHERE division='Rangpur' ORDER BY time DESC")
+        rangpur = cursor.fetchone()
+        cursor.execute("SELECT pm25, DATE(time) FROM tblAirQuality WHERE division='Barishal' ORDER BY time DESC")
+        barishal = cursor.fetchone()
+        cursor.execute("SELECT pm25, DATE(time) FROM tblAirQuality WHERE division='Sylhet' ORDER BY time DESC")
+        sylhet = cursor.fetchone()
+        cursor.execute("SELECT pm25, DATE(time) FROM tblAirQuality WHERE division='Khulna' ORDER BY time DESC")
+        khulna = cursor.fetchone()
+        cursor.execute("SELECT pm25, DATE(time) FROM tblAirQuality WHERE division='Rajshahi' ORDER BY time DESC")
+        rajshahi = cursor.fetchone()
+        cursor.execute("SELECT pm25, DATE(time) FROM tblAirQuality WHERE division='Chittagong' ORDER BY time DESC")
+        chittagong = cursor.fetchone()
+        cursor.execute("SELECT pm25, DATE(time) FROM tblAirQuality WHERE division='Mymensingh' ORDER BY time DESC")
+        mymensingh = cursor.fetchone()
+        cleaned_dhaka = {
+                "pm2.5": dhaka[0],
+                "date": dhaka[1], 
+                "division": "Dhaka"
+        }
+        cleaned_rangpur = {
+                "pm2.5": rangpur[0],
+                "date": rangpur[1], 
+                "division": "rangpur"
+        }
+        cleaned_barishal = {
+                "pm2.5": barishal[0],
+                "date": barishal[1], 
+                "division": "barishal"
+        }
+        cleaned_sylhet = {
+                "pm2.5": sylhet[0],
+                "date": sylhet[1], 
+                "division": "sylhet"
+        }
+        cleaned_khulna = {
+                "pm2.5": khulna[0],
+                "date": khulna[1], 
+                "division": "khulna"
+        }
+        cleaned_rajshahi = {
+                "pm2.5": rajshahi[0],
+                "date": rajshahi[1], 
+                "division": "rajshahi"
+        }
+        cleaned_chittagong = {
+                "pm2.5": chittagong[0],
+                "date": chittagong[1], 
+                "division": "chittagong"
+        }
+        cleaned_mymensingh = {
+                "pm2.5": mymensingh[0],
+                "date": mymensingh[1], 
+                "division": "mymensingh"
+        }
+        data = []
+        data.append(cleaned_dhaka)
+        data.append(cleaned_rangpur)
+        data.append(cleaned_sylhet)
+        data.append(cleaned_barishal)
+        data.append(cleaned_mymensingh)
+        data.append(cleaned_chittagong)
+        data.append(cleaned_khulna)
+        data.append(cleaned_rajshahi)
+        figure = px.line(data, x="division", y="pm2.5", title="Division-Wise Daily AQI")
+        line_chart = plot(figure, output_type="div")
+    return render(request, "air/daily-based.html", {
+            "username": username,
+            "line_chart": line_chart
+        })

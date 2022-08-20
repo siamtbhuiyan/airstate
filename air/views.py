@@ -49,6 +49,7 @@ def index(request):
         "years": years,
         "currentDivision": currentDivision,
         "times": times,
+        "box_basis": ["By Station", "Monthly"],
         "aqi_value": aqi[0],
         "aqi_status": aqi[1],
         "aqi_color": aqi[2]
@@ -299,4 +300,39 @@ def time_based(request):
         return render(request, "air/time-based.html", {
             "username": username,
             "line_chart": line_chart
+        })
+
+@login_required
+def box_plot(request):
+    username = ""
+    if request.session.has_key('username'):
+        username = request.session['username']
+    if request.method == "POST":
+        if request.POST["time"] == "By Station":
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT pm25, station FROM tblAirQuality")
+                data = cursor.fetchall()
+            cleaned_data = [
+                {
+                    "PM2.5": d[0],
+                    "Station": d[1], 
+                } for d in data
+            ]
+            figure = px.box(cleaned_data, x="Station", y="PM2.5")
+            box = plot(figure, output_type="div")
+        elif request.POST["time"] == "Monthly":
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT pm25, strftime('%m', time) FROM tblAirQuality")
+                data = cursor.fetchall()
+            cleaned_data = [
+                {
+                    "PM2.5": d[0],
+                    "Month": d[1], 
+                } for d in data
+            ]
+            figure = px.box(cleaned_data, x="Month", y="PM2.5")
+            box = plot(figure, output_type="div")
+    return render(request, "air/box-plot.html", {
+            "username": username,
+            "box": box
         })

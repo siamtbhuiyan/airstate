@@ -737,6 +737,73 @@ def bd_map(request):
         })
 
 @login_required
+def data_box(request):
+    username = ""
+    if request.session.has_key('username'):
+        username = request.session['username']
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT pm25, organization FROM tblAirQuality")
+        data = cursor.fetchall()
+    cleaned_data = [
+        {
+            "PM2.5": d[0],
+            "Organization": d[1], 
+        } for d in data
+    ]
+    figure = px.box(cleaned_data, x="Organization", y="PM2.5", color="Organization", title="Box plot AQI Data Visualization By Organization")
+    box = plot(figure, output_type="div")
+    return render(request, "air/data-box.html", {
+            "username": username,
+            "box": box
+        })
+
+# @login_required
+# def scatter(request):
+#     username = ""
+#     if request.session.has_key('username'):
+#         username = request.session['username']
+#     with connection.cursor() as cursor:
+#         cursor.execute("SELECT pm25, strftime('%Y', time), organization FROM tblAirQuality WHERE organization='EPA'")
+#         epa_data = cursor.fetchall()
+#         cursor.execute("SELECT pm25, strftime('%Y', time), organization FROM tblAirQuality WHERE organization='PurpleAir'")
+#         purple_data = cursor.fetchall()
+#     # cleaned_data_epa = [
+#     #     {
+#     #         "PM2.5_epa": d[0],
+#     #         "Year": d[1],
+#     #         "Organization": d[2], 
+#     #     } for d in epa_data
+#     # ]
+#     # cleaned_data_purple = [
+#     #     {
+#     #         "PM2.5_purple": purple_data[i][0], 
+#     #         "Year": purple_data[i][1], 
+#     #         "Organization": purple_data[i][2], 
+#     #     } for i in range(len(epa_data))
+#     # ]
+#     # for x in cleaned_data_purple:
+#     #     cleaned_data_epa.append(x)
+#     # print(len(cleaned_data_epa))
+#     # print(len(cleaned_data_purple))
+#     x = []
+#     years = []
+#     for data in epa_data:
+#         x.append(data[0])
+#         years.append(data[1])
+#     y = []
+#     for index in range(len(x)):
+#         y.append(purple_data[index][0])
+#         # years.append(data[1])
+#     # print(len(cleaned_data_epa))
+#     # print(cleaned_data_purple)
+#     figure = px.scatter(x=x, y=y, color=years)
+#     scatter_plot = plot(figure, output_type="div")
+#     return render(request, "air/scatter.html", {
+#             "username": username,
+#             "scatter_plot": scatter_plot
+#         })
+
+@login_required
 def add(request):
     username = ""
     message = ""

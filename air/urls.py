@@ -14,4 +14,6 @@ urlpatterns = [
     path("yearly-average", views.yearly_average, name="yearly_average"),
     path("bd-map", views.bd_map, name="bd_map"),
     path("add", views.add, name="add"),
+    path("data-box", views.data_box, name="data_box"),
+    path("scatter", views.scatter, name="scatter"),
 ]

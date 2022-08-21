@@ -139,6 +139,14 @@
         <button type="submit" class="btn btn-primary">Generate</button>
       </form>
     </div>
+    <div class="py-4">
+      <p class="fw-bold">8. Box plot AQI Data Visualization By Organization</p>
+      <form action="{% url 'data_box' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">Generate</button>
+      </form>
+    </div>
+    
   </div>
 </div>
 {% endblock %}

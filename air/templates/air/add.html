@@ -1,0 +1,66 @@
+{% extends "air/layout.html" %}
+
+{% block body %}
+{% if message != "" %}
+<div class="alert alert-success">{{ message }}</div>
+{% endif %}
+{% if isAdmin %}
+<div class="py-4">
+    <div class="py-3">
+        <h4>Add Data Manually</h4>
+    </div>
+    <form action="{% url 'add' %}" method="post">
+        {% csrf_token %}
+        <div class="form-group py-2">
+            <input class="form-control" autofocus type="date" name="time" placeholder="Enter Date" required>
+        </div>
+        <div class="form-group py-2">
+            <input class="form-control" type="number" step="0.01" name="pm25" placeholder="Enter PM2.5" required>
+        </div>
+        <div class="form-group py-2">
+            <input class="form-control" type="number" step="0.01" name="temp" placeholder="Enter Average Temperature" required>
+        </div>
+        <div class="form-group py-2">
+            <input class="form-control" type="number" step="0.01" name="rain" placeholder="Enter Rain Precipitation" required>
+        </div>
+        <div class="form-group py-2">
+            <input class="form-control" type="number" step="0.01" name="wind" placeholder="Enter Wind Speed" required>
+        </div>
+        <div class="form-group py-2">
+            <input class="form-control" type="number" step="0.01" name="visibility" placeholder="Enter Visibility" required>
+        </div>
+        <div class="form-group py-2">
+            <input class="form-control" type="number" step="0.01" name="cloud" placeholder="Enter Cloud Cover" required>
+        </div>
+        <div class="form-group py-2">
+            <input class="form-control" type="number" step="0.01" name="relative" placeholder="Enter Relative Humidity" required>
+        </div>
+        <div class="form-group py-2">
+            <input class="form-control" type="number" name="station" placeholder="Enter Station" required>
+        </div>
+        <div class="form-group py-2">
+            <input class="form-control" type="text" name="division" placeholder="Enter Division" required>
+        </div>
+        <div class="form-group py-2">
+            <input class="form-control" type="text" name="organization" placeholder="Enter Organization" required>
+        </div>
+        <div class="form-group py-2">
+            <input class="form-control" type="text" name="season" placeholder="Enter Season" required>
+        </div>
+        <input class="btn btn-primary" type="submit" value="Add">
+    </form>
+    <div class="py-3">
+        <h4>Add Data from CSV</h4>
+        <form action="{% url 'add' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group py-2">
+                <input type="file" name="csv" id="csv" accept=".csv" class="form-control">
+            </div>
+            <input class="btn btn-primary" type="submit" value="Upload">
+          </form>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-danger">You are not an admin and hence cannot add data</div>
+{% endif %}
+{% endblock %}

@@ -12,5 +12,6 @@ urlpatterns = [
     path("box-plot", views.box_plot, name="box_plot"),
     path("season-wise", views.season_wise, name="season_wise"),
     path("yearly-average", views.yearly_average, name="yearly_average"),
-    path("bd-map", views.bd_map, name="bd_map")
+    path("bd-map", views.bd_map, name="bd_map"),
+    path("add", views.add, name="add"),
 ]

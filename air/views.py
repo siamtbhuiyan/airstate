@@ -1,5 +1,3 @@
-from ctypes.wintypes import PPOINT
-from webbrowser import get
 from django.shortcuts import render
 from django.db import connection
 from django.http import HttpResponseRedirect, HttpResponse
@@ -13,11 +11,25 @@ import plotly.express as px
 
 from json import load
 
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from django.conf import settings
+import csv
+
+import datetime
+
+
 @login_required
 def index(request):
     username = ""
     if request.session.has_key('username'):
         username = request.session['username']
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT isAdmin FROM tblUser WHERE username=%s", [username])
+        admin_data = cursor.fetchone()
+    isAdmin = False
+    if admin_data[0] == 1:
+        isAdmin = True
     with connection.cursor() as cursor:
         cursor.execute("SELECT DATE(time), pm25 FROM tblAirQuality WHERE division='Dhaka' ORDER BY time DESC")
         current = cursor.fetchone()
@@ -58,7 +70,8 @@ def index(request):
         "aqi_value": aqi[0],
         "aqi_status": aqi[1],
         "aqi_color": aqi[2],
-        "pm25": current[1]
+        "pm25": current[1],
+        "isAdmin": isAdmin
     })
 
 def register(request):
@@ -721,4 +734,37 @@ def bd_map(request):
     return render(request, "air/bd-map.html", {
             "username": username,
             "division_map": division_map
+        })
+
+@login_required
+def add(request):
+    username = ""
+    message = ""
+    if request.session.has_key('username'):
+        username = request.session['username']
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT isAdmin FROM tblUser WHERE username=%s", [username])
+        admin_data = cursor.fetchone()
+    isAdmin = False
+    if admin_data[0] == 1:
+        isAdmin = True
+    if request.method == "POST":
+        if 'time' in request.POST:
+            with connection.cursor() as cursor:
+                cursor.execute("INSERT INTO tblAirQuality (time, pm25, averageTemp, rainPercipitation, windSpeed, visibility, cloudCover, relativeHumidity, station, division, organization, season) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", [request.POST["time"], request.POST["pm25"], request.POST["temp"], request.POST["rain"], request.POST["wind"], request.POST["visibility"], request.POST["cloud"], request.POST["relative"], request.POST["station"], request.POST["division"], request.POST["organization"], request.POST["season"]])
+            message = "Data Inserted Successfully"
+        elif 'csv' in request.FILES:
+            current_csv = request.FILES['csv']
+            path = default_storage.save(f'{current_csv.name}', ContentFile(current_csv.read()))
+            file = pd.read_csv(f'uploads/{path}')
+            file['time'] = pd.to_datetime(file['time']).dt.date
+            data = file.values.tolist()
+            for d in data:
+                with connection.cursor() as cursor:
+                    cursor.execute("INSERT INTO tblAirQuality (time, pm25, averageTemp, rainPercipitation, windSpeed, visibility, cloudCover, relativeHumidity, station, division, organization, season) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", d)
+                message = "Data Imported Successfully"
+    return render(request, "air/add.html", {
+            "username": username,
+            "isAdmin": isAdmin,
+            "message": message
         })
